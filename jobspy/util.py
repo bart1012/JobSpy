@@ -4,16 +4,52 @@ import logging
 import re
 from itertools import cycle
 
+from gspread import Spreadsheet, Worksheet
+import gspread
 import numpy as np
+from pandas import DataFrame
 import requests
+import shlex
 import tls_client
 import urllib3
 from markdownify import markdownify as md
 from requests.adapters import HTTPAdapter, Retry
+from google.oauth2.service_account import Credentials
+from gspread_dataframe import get_as_dataframe, set_with_dataframe
+
 
 from jobspy.model import CompensationInterval, JobType, Site
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+def add_to_spreadsheet(jobs: DataFrame, worksheet: Worksheet):
+    target_row = len(worksheet.get_all_values()) + 1
+    existing_job_ids = set(worksheet.col_values(7))
+    if len(jobs) == 0:
+        print(f"No matching jobs found. DataFrame length: {len(jobs)}")
+        return
+    cleaned_df = jobs[
+        ["title", "company", "location", "date_posted", "site", "job_url", "id"]
+    ]
+    only_new_df = cleaned_df[~cleaned_df.id.isin(existing_job_ids)]
+    if len(only_new_df) > 0:
+        print(f"✅ Appended {len(only_new_df)} new jobs to the spreadsheet.")
+        set_with_dataframe(
+            worksheet, only_new_df, row=target_row, include_column_header=False
+        )
+    else:
+        print(f"✅ Found {len(cleaned_df)} duplicate jobs. No jobs were appended.")
+
+
+def connect_spreadsheet(credentials_path: str, sheet_id: str) -> Spreadsheet:
+    scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+    creds = Credentials.from_service_account_file(credentials_path, scopes=scopes)
+    client = gspread.authorize(creds)
+
+    sheet_id = sheet_id
+    sheet = client.open_by_key(sheet_id)
+    return sheet
 
 
 def create_logger(name: str):
@@ -290,6 +326,22 @@ def extract_job_type(description: str):
 
 def map_str_to_site(site_name: str) -> Site:
     return Site[site_name.upper()]
+
+
+def _should_omit(
+    title: str, company: str, keywords: str | None, url: str | None = None
+) -> bool:
+    if keywords is None or len(keywords) <= 0:
+        return False
+    keyword_list = shlex.split(keywords.lower())
+    try:
+        for word in keyword_list:
+            if word in title.lower() or word in company.lower():
+                return True
+        return False
+    except:
+        print(f"Error parsing job data. Job URL: {url}")
+        return False
 
 
 def get_enum_from_value(value_str):

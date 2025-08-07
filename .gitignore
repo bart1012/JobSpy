@@ -8,3 +8,6 @@
 *.pyc
 .env
 dist
+secrets.json
+user_cv.py
+gspread_cred.json

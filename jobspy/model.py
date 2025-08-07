@@ -6,6 +6,58 @@ from datetime import date
 from enum import Enum
 from pydantic import BaseModel
 
+"""
+ Enums for GOVUK only: LocationCode, JobCategory
+"""
+
+
+class Job_short(BaseModel):
+    title: str
+    company: str
+    location: str
+    date_posted: str
+    site: str
+    job_url: str
+    id: str
+
+
+class LocationCode(Enum):
+    UK = 86383
+    NORTHWEST = 86396
+
+
+class JobCategory(Enum):
+    ACCOUNTING_FINANCE = 1
+    ADMIN = 2
+    AGRICULTURE_FORESTRY = 3
+    CONSULTANCY = 4
+    CREATIVE_DESIGN = 5
+    CUSTOMER_SERVICES = 6
+    DOMESTIC_HELP_CLEANING = 7
+    ENERGY_OIL_GAS = 8
+    ENGINEERING = 9
+    GRADUATE = 10
+    HR_RECRUITMENT = 11
+    HEALTHCARE_NURSING = 12
+    HOSPITALITY_CATERING = 13
+    IT = 14
+    LEGAL = 15
+    LOGISTICS_WAREHOUSE = 16
+    MAINTENANCE = 17
+    MANUFACTURING = 18
+    OTHER_GENERAL = 19
+    MARKETING_PR_ADVERTISING = 20
+    PROPERTY = 21
+    RETAIL = 22
+    SALES = 23
+    SCIENTIFIC_QA = 24
+    SECURITY_PROTECTIVE = 25
+    SOCIAL_WORK = 26
+    EDUCATION_CHILDCARE = 27
+    TRADE_CONSTRUCTION = 28
+    TRAVEL = 29
+    SOCIAL_CARE = 177
+
 
 class JobType(Enum):
     FULL_TIME = (
@@ -272,12 +324,15 @@ class JobPost(BaseModel):
     job_function: str | None = None
 
     # Naukri specific
-    skills: list[str] | None = None  #from tagsAndSkills
-    experience_range: str | None = None  #from experienceText
-    company_rating: float | None = None  #from ambitionBoxData.AggregateRating
-    company_reviews_count: int | None = None  #from ambitionBoxData.ReviewsCount
-    vacancy_count: int | None = None  #from vacancy
-    work_from_home_type: str | None = None  #from clusters.wfhType (e.g., "Hybrid", "Remote")
+    skills: list[str] | None = None  # from tagsAndSkills
+    experience_range: str | None = None  # from experienceText
+    company_rating: float | None = None  # from ambitionBoxData.AggregateRating
+    company_reviews_count: int | None = None  # from ambitionBoxData.ReviewsCount
+    vacancy_count: int | None = None  # from vacancy
+    work_from_home_type: str | None = (
+        None  # from clusters.wfhType (e.g., "Hybrid", "Remote")
+    )
+
 
 class JobResponse(BaseModel):
     jobs: list[JobPost] = []
@@ -285,6 +340,7 @@ class JobResponse(BaseModel):
 
 class Site(Enum):
     LINKEDIN = "linkedin"
+    GOVUK = "govuk"
     INDEED = "indeed"
     ZIP_RECRUITER = "zip_recruiter"
     GLASSDOOR = "glassdoor"
@@ -302,7 +358,9 @@ class ScraperInput(BaseModel):
     site_type: list[Site]
     search_term: str | None = None
     google_search_term: str | None = None
-
+    avoid_keywords: str | None = None
+    govuk_location: LocationCode = LocationCode.UK
+    govuk_job_category: JobCategory | None = None
     location: str | None = None
     country: Country | None = Country.USA
     distance: int | None = None

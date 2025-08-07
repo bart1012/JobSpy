@@ -18,7 +18,7 @@ from jobspy.linkedin.util import (
     job_type_code,
     parse_job_type,
     parse_job_level,
-    parse_company_industry
+    parse_company_industry,
 )
 from jobspy.model import (
     JobPost,
@@ -32,6 +32,7 @@ from jobspy.model import (
     Site,
 )
 from jobspy.util import (
+    _should_omit,
     extract_emails_from_text,
     currency_parser,
     markdown_converter,
@@ -220,7 +221,8 @@ class LinkedIn(Scraper):
             job_details = self._get_job_details(job_id)
             description = job_details.get("description")
         is_remote = is_job_remote(title, description, location)
-
+        if _should_omit(title or "", company or "", self.scraper_input.avoid_keywords):
+            return None
         return JobPost(
             id=f"li-{job_id}",
             title=title,

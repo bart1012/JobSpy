@@ -1,0 +1,20 @@
+{
+    "python-envs.pythonProjects": [],
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "python.languageServer": "Pylance",
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.useLibraryCodeForTypes": true,
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": true
+    },
+    "editor.formatOnSave": true,
+    "python.formatting.provider": "black",
+    "python.analysis.extraPaths": [
+        "./jobspy"
+    ]
+}

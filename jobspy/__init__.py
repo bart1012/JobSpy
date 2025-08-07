@@ -8,10 +8,18 @@ import pandas as pd
 from jobspy.bayt import BaytScraper
 from jobspy.glassdoor import Glassdoor
 from jobspy.google import Google
+from jobspy.govuk import Govuk
 from jobspy.indeed import Indeed
 from jobspy.linkedin import LinkedIn
 from jobspy.naukri import Naukri
-from jobspy.model import JobType, Location, JobResponse, Country
+from jobspy.model import (
+    JobType,
+    Location,
+    JobResponse,
+    Country,
+    LocationCode,
+    JobCategory,
+)
 from jobspy.model import SalarySource, ScraperInput, Site
 from jobspy.util import (
     set_logger_level,
@@ -29,6 +37,9 @@ def scrape_jobs(
     site_name: str | list[str] | Site | list[Site] | None = None,
     search_term: str | None = None,
     google_search_term: str | None = None,
+    avoid_keywords: str | None = None,
+    govuk_location: LocationCode = LocationCode.UK,
+    govuk_job_category: JobCategory | None = None,
     location: str | None = None,
     distance: int | None = 50,
     is_remote: bool = False,
@@ -59,6 +70,7 @@ def scrape_jobs(
         Site.GOOGLE: Google,
         Site.BAYT: BaytScraper,
         Site.NAUKRI: Naukri,
+        Site.GOVUK: Govuk,
     }
     set_logger_level(verbose)
     job_type = get_enum_from_value(job_type) if job_type else None
@@ -83,6 +95,9 @@ def scrape_jobs(
         country=country_enum,
         search_term=search_term,
         google_search_term=google_search_term,
+        avoid_keywords=avoid_keywords,
+        govuk_location=govuk_location,
+        govuk_job_category=govuk_job_category,
         location=location,
         distance=distance,
         is_remote=is_remote,
@@ -179,7 +194,7 @@ def scrape_jobs(
                 else None
             )
 
-            #naukri-specific fields
+            # naukri-specific fields
             job_data["skills"] = (
                 ", ".join(job_data["skills"]) if job_data["skills"] else None
             )

@@ -16,6 +16,7 @@ from jobspy.model import (
     JobType,
     DescriptionFormat,
 )
+from jobspy.util import _should_omit
 from jobspy.util import (
     extract_emails_from_text,
     markdown_converter,
@@ -212,6 +213,14 @@ class Indeed(Scraper):
         employer = job["employer"].get("dossier") if job["employer"] else None
         employer_details = employer.get("employerDetails", {}) if employer else {}
         rel_url = job["employer"]["relativeCompanyPageUrl"] if job["employer"] else None
+
+        if _should_omit(
+            job["title"] or "",
+            job["employer"].get("name", "") if job["employer"] is not None else "",
+            self.scraper_input.avoid_keywords,
+            job_url,
+        ):
+            return None
         return JobPost(
             id=f'in-{job["key"]}',
             title=job["title"],

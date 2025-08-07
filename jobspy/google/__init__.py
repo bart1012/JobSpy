@@ -16,7 +16,12 @@ from jobspy.model import (
     Location,
     JobType,
 )
-from jobspy.util import extract_emails_from_text, extract_job_type, create_session
+from jobspy.util import (
+    _should_omit,
+    extract_emails_from_text,
+    extract_job_type,
+    create_session,
+)
 from jobspy.google.util import log, find_job_info_initial_page, find_job_info
 
 
@@ -25,7 +30,7 @@ class Google(Scraper):
         self, proxies: list[str] | str | None = None, ca_cert: str | None = None
     ):
         """
-        Initializes Google Scraper with the Goodle jobs search url
+        Initializes Google Scraper with the Google jobs search url
         """
         site = Site(Site.GOOGLE)
         super().__init__(site, proxies=proxies, ca_cert=ca_cert)
@@ -34,6 +39,7 @@ class Google(Scraper):
         self.session = None
         self.scraper_input = None
         self.jobs_per_page = 10
+        self.filter_keywords = None
         self.seen_urls = set()
         self.url = "https://www.google.com/search"
         self.jobs_url = "https://www.google.com/async/callback:550"
@@ -45,6 +51,7 @@ class Google(Scraper):
         :return: JobResponse containing a list of jobs.
         """
         self.scraper_input = scraper_input
+        self.filter_keywords = scraper_input.avoid_keywords
         self.scraper_input.results_wanted = min(900, scraper_input.results_wanted)
 
         self.session = create_session(
@@ -122,7 +129,7 @@ class Google(Scraper):
 
         params = {"q": query, "udm": "8"}
         response = self.session.get(self.url, headers=headers_initial, params=params)
-
+        print(f"Google response: {response.text}")
         pattern_fc = r'<div jsname="Yust4d"[^>]+data-async-fc="([^"]+)"'
         match_fc = re.search(pattern_fc, response.text)
         data_async_fc = match_fc.group(1) if match_fc else None
@@ -184,6 +191,8 @@ class Google(Scraper):
             date_posted = (datetime.now() - timedelta(days=days_ago)).date()
 
         description = job_info[19]
+        if _should_omit(title, company_name, description):
+            return None
 
         job_post = JobPost(
             id=f"go-{job_info[28]}",
